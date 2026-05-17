@@ -1,0 +1,19 @@
+# 仮想環境
+.venv/
+
+# Python関連
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# データファイル（大きいので Git に入れない）
+data/*.csv
+data/*.xlsx
+!data/sample.csv
+
+# OS関連
+Thumbs.db
+.DS_Store
+
+# IDE
+.vscode/settings.json
