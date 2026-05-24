@@ -7,8 +7,8 @@ __pycache__/
 .ipynb_checkpoints/
 
 # データファイル（大きいので Git に入れない）
-data/*.csv
-data/*.xlsx
+data/**/*.csv
+data/**/*.xlsx
 !data/sample.csv
 
 # OS関連
