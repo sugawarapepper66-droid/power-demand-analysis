@@ -14,15 +14,18 @@
 - pandas
 - matplotlib / seaborn
 - Jupyter Notebook
+- AWS（Lambda / S3 / EventBridge / IAM / CloudWatch）
 
 ## 📁 リポジトリ構成
 
 ```
-├── data/raw/       # TEPCO CSV（取得スクリプトで生成）
-├── notebooks/      # 分析用 Jupyter Notebook
-├── src/            # データ取得スクリプト
-├── docs/images/    # 出力グラフ
-├── docs/           # 復習リファレンス
+├── data/raw/                  # TEPCO CSV（取得スクリプトで生成）
+├── notebooks/                 # 分析用 Jupyter Notebook
+├── src/
+│   ├── fetch_tepco.py         # ローカル用データ取得スクリプト
+│   └── lambda_fetch_tepco.py  # AWS Lambda 関数（日次自動取得）
+├── docs/images/               # 出力グラフ
+├── docs/                      # 復習リファレンス・AWS構成解説
 └── READ_ME.md
 ```
 
@@ -58,6 +61,21 @@
 夏は午後単峰（13-14時 ≒ 5,950万kW）、冬は日中プラトー＋夕方ピーク
 （17時 ≒ 5,380万kW）。再エネ対応の難しさが時間帯別に異なる。
 
+## ☁️ AWSで自動取得（サーバーレス ETL）
+
+手動で動かしていたデータ取得を、AWSで毎日自動で動くようにした。
+毎朝Lambdaがデータを取ってきてS3にためる仕組み。
+
+```mermaid
+flowchart LR
+    EB["EventBridge<br/>毎朝6時に起動"] -->|起動| L["Lambda<br/>fetch-tepco-demand"]
+    T["TEPCO でんき予報<br/>juyo-YYYY.csv"] -->|取得| L
+    L -->|保存| S3["S3 (raw/)<br/>juyo-2021〜2025.csv"]
+    S3 -.->|分析| NB["pandas / Jupyter"]
+```
+
+詳しい構成や作った手順は [docs/aws_etl.md](docs/aws_etl.md) にまとめた。費用はほぼ無料。
+
 ## 🚀 実行方法
 
 ```powershell
@@ -76,8 +94,7 @@ jupyter notebook notebooks/01_load_check.ipynb
 
 ## 📚 学習ドキュメント
 
-- [Step 2 復習リスト](docs/step2_review.md) — データ取得・pandas基礎
-- [Step 3 復習リスト](docs/step3_review.md) — 可視化基礎（作成予定）
+- [AWS ETL 構成解説](docs/aws_etl.md) — サーバーレスによる日次自動収集基盤
 
 ## 📝 開発について
 
