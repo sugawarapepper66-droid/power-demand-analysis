@@ -15,6 +15,7 @@ flowchart LR
     T["TEPCO でんき予報<br/>juyo-YYYY.csv"] -->|取得| L
     L -->|保存| S3["S3 (raw/)<br/>juyo-2021〜2025.csv"]
     S3 -.->|分析| NB["pandas / Jupyter"]
+    S3 -.->|SQL| AT["Athena"]
 ```
 
 ざっくり言うと、EventBridge（タイマー）が毎朝Lambdaを動かして、LambdaがTEPCOからCSVを取ってきてS3に保存する、という流れ。
@@ -35,11 +36,30 @@ flowchart LR
 - LambdaがS3に書く権限は最初なくて権限エラーが出たので、`raw/` に書くぶんだけ許可した
 - 過去年（2021〜2024）はもう変わらないので、手元のファイルを一度だけS3にアップロードした
 
+## AthenaでSQLを試した
+
+S3にためたCSVに、AthenaでそのままSQLを投げてみた。DBにデータを入れ直さなくても分析できる。
+
+- 外部テーブルを作るときに、先頭3行（メタ情報・空行・日本語ヘッダ）を読み飛ばす設定にした
+- 日本語はヘッダ行だけで、データ本体はASCIIなので文字化けしなかった
+- 年別のピーク需要を集計してみたら、2022年が一番高くて **2022/8/2 13時に5,930万kW** だった
+- これはStep3でpandasを使って出した結論と同じで、SQLだと時刻まで特定できた
+
+年別ピークを出したSQL：
+
+```sql
+SELECT split_part(date_str, '/', 1) AS year,
+       max(demand) AS peak_man_kw
+FROM power_demand.demand_raw
+GROUP BY split_part(date_str, '/', 1)
+ORDER BY year;
+```
+
 ## コスト
 
 この規模だとほぼ無料だった。念のためAWS Budgetsで月1ドルの予算アラートを設定してある。
+Athenaもスキャン量がごく少ないので、1クエリの料金はほぼ0円だった。
 
 ## これからやりたいこと
 
-- AthenaでS3のデータに直接SQLを投げてみる
 - 構成をコード（SAMやTerraform）で書けるようにする
