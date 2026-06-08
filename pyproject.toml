@@ -1,0 +1,8 @@
+[tool.ruff]
+# 1行の最大文字数（blackと同じ既定値）
+line-length = 88
+target-version = "py312"
+
+[tool.ruff.lint]
+# E: コードスタイル（pycodestyle）/ F: 未使用import・変数など（pyflakes）/ I: import並び替え
+select = ["E", "F", "I"]
